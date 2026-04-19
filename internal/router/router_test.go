@@ -60,3 +60,12 @@ func TestRoutes_Names(t *testing.T) {
 		t.Errorf("unexpected route names: %v", names)
 	}
 }
+
+func TestDispatch_NoRoutes(t *testing.T) {
+	r := New()
+	line := []byte(`{"level":"info","msg":"hello"}`)
+	count := r.Dispatch(line)
+	if count != 0 {
+		t.Fatalf("expected 0 dispatches on empty router, got %d", count)
+	}
+}
