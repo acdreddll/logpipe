@@ -25,6 +25,9 @@ func NewRegistry(configs []Config) (*Registry, error) {
 		if cfg.Name == "" {
 			return nil, fmt.Errorf("transform config missing name")
 		}
+		if _, exists := reg.transformers[cfg.Name]; exists {
+			return nil, fmt.Errorf("duplicate transform name %q", cfg.Name)
+		}
 		tr, err := New(cfg.Rules)
 		if err != nil {
 			return nil, fmt.Errorf("transform %q: %w", cfg.Name, err)
