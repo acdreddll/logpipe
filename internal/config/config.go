@@ -1,61 +1,79 @@
-// Package config loads and validates logpipe pipeline configuration from YAML.
+// Package config loads and validates logpipe YAML configuration.
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
-// RouteConfig defines a single named route with an optional filter and output.
-type RouteConfig struct {
+// Route describes a single named routing rule.
+type Route struct {
 	Name      string            `yaml:"name"`
-	Filter    map[string]string `yaml:"filter,omitempty"`
-	Transform []map[string]string `yaml:"transform,omitempty"`
-	Output    OutputConfig      `yaml:"output"`
+	Filter    map[string]string `yaml:"filter"`
+	Transform []map[string]string `yaml:"transform"`
+	Output    string            `yaml:"output"`
+	Sample    *SampleConfig     `yaml:"sample"`
+	Redact    []RedactConfig    `yaml:"redact"`
+	Buffer    *BufferConfig     `yaml:"buffer"`
 }
 
-// OutputConfig specifies the output destination for a route.
+// BufferConfig holds optional buffering settings for a route.
+type BufferConfig struct {
+	Size     int    `yaml:"size"`
+	Interval string `yaml:"interval"`
+}
+
+// SampleConfig defines sampling behaviour for a route.
+type SampleConfig struct {
+	Rate float64 `yaml:"rate"`
+	Mode string  `yaml:"mode"` // "deterministic" | "random"
+}
+
+// RedactConfig describes a single field redaction rule.
+type RedactConfig struct {
+	Field  string `yaml:"field"`
+	Action string `yaml:"action"` // "mask" | "delete"
+}
+
+// OutputConfig describes an output destination.
 type OutputConfig struct {
+	Name string `yaml:"name"`
 	Type string `yaml:"type"`
-	Path string `yaml:"path,omitempty"`
+	Path string `yaml:"path"`
 }
 
-// Config is the top-level pipeline configuration.
+// Config is the top-level logpipe configuration.
 type Config struct {
-	Routes []RouteConfig `yaml:"routes"`
+	Outputs []OutputConfig `yaml:"outputs"`
+	Routes  []Route        `yaml:"routes"`
 }
 
-// Load reads and parses a YAML config file at the given path.
+// Load reads and validates a YAML config file at path.
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("config: read file: %w", err)
+		return nil, fmt.Errorf("config: read %s: %w", path, err)
 	}
-
 	var cfg Config
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("config: parse yaml: %w", err)
+		return nil, fmt.Errorf("config: parse: %w", err)
 	}
-
-	if err := cfg.validate(); err != nil {
+	if err := validate(&cfg); err != nil {
 		return nil, err
 	}
-
 	return &cfg, nil
 }
 
-func (c *Config) validate() error {
-	if len(c.Routes) == 0 {
-		return fmt.Errorf("config: at least one route is required")
+func validate(cfg *Config) error {
+	if len(cfg.Routes) == 0 {
+		return errors.New("config: at least one route is required")
 	}
-	for i, r := range c.Routes {
-		if r.Name == "" {
-			return fmt.Errorf("config: route[%d]: name is required", i)
-		}
-		if r.Output.Type == "" {
-			return fmt.Errorf("config: route[%d] %q: output.type is required", i, r.Name)
+	for _, o := range cfg.Outputs {
+		if o.Type == "" {
+			return fmt.Errorf("config: output %q missing type", o.Name)
 		}
 	}
 	return nil

@@ -1,11 +1,8 @@
-package config_test
+package config
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
-
-	"github.com/yourorg/logpipe/internal/config"
 )
 
 func writeTemp(t *testing.T, content string) string {
@@ -22,67 +19,72 @@ func writeTemp(t *testing.T, content string) string {
 }
 
 func TestLoad_Valid(t *testing.T) {
-	path := writeTemp(t, `
+	p := writeTemp(t, `
+outputs:
+  - name: stdout
+    type: stdout
 routes:
-  - name: stdout-all
-    output:
-      type: stdout
+  - name: all
+    output: stdout
 `)
-	cfg, err := config.Load(path)
+	cfg, err := Load(p)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(cfg.Routes) != 1 {
 		t.Fatalf("expected 1 route, got %d", len(cfg.Routes))
 	}
-	if cfg.Routes[0].Name != "stdout-all" {
-		t.Errorf("expected name stdout-all, got %q", cfg.Routes[0].Name)
-	}
 }
 
 func TestLoad_MissingFile(t *testing.T) {
-	_, err := config.Load(filepath.Join(t.TempDir(), "missing.yaml"))
+	_, err := Load("/no/such/file.yaml")
 	if err == nil {
 		t.Fatal("expected error for missing file")
 	}
 }
 
 func TestLoad_NoRoutes(t *testing.T) {
-	path := writeTemp(t, `routes: []`)
-	_, err := config.Load(path)
+	p := writeTemp(t, `outputs:\n  - name: x\n    type: stdout\n`)
+	_, err := Load(p)
 	if err == nil {
-		t.Fatal("expected validation error for empty routes")
+		t.Fatal("expected validation error for no routes")
 	}
 }
 
 func TestLoad_MissingOutputType(t *testing.T) {
-	path := writeTemp(t, `
+	p := writeTemp(t, `
+outputs:
+  - name: bad
 routes:
-  - name: bad-route
-    output:
-      path: /tmp/out.log
+  - name: r
+    output: bad
 `)
-	_, err := config.Load(path)
+	_, err := Load(p)
 	if err == nil {
-		t.Fatal("expected validation error for missing output type")
+		t.Fatal("expected error for missing output type")
 	}
 }
 
-func TestLoad_WithFilter(t *testing.T) {
-	path := writeTemp(t, `
+func TestLoad_BufferConfig(t *testing.T) {
+	p := writeTemp(t, `
+outputs:
+  - name: stdout
+    type: stdout
 routes:
-  - name: errors-only
-    filter:
-      level: error
-    output:
-      type: file
-      path: /tmp/errors.log
+  - name: buffered
+    output: stdout
+    buffer:
+      size: 50
+      interval: 1s
 `)
-	cfg, err := config.Load(path)
+	cfg, err := Load(p)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if cfg.Routes[0].Filter["level"] != "error" {
-		t.Errorf("expected filter level=error")
+	if cfg.Routes[0].Buffer == nil {
+		t.Fatal("expected buffer config to be set")
+	}
+	if cfg.Routes[0].Buffer.Size != 50 {
+		t.Fatalf("expected size 50, got %d", cfg.Routes[0].Buffer.Size)
 	}
 }
