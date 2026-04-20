@@ -2,6 +2,7 @@ package filter
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -45,7 +46,7 @@ func (f *Filter) Match(line []byte) (bool, error) {
 				return false, nil
 			}
 		default:
-			return false, nil
+			return false, fmt.Errorf("filter: unknown operator %q", rule.Operator)
 		}
 	}
 	return true, nil
