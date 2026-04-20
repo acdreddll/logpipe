@@ -43,9 +43,10 @@ my-app | logpipe --level info --filter env=production
 | Flag | Description |
 |------|-------------|
 | `--level` | Minimum log level to display (`debug`, `info`, `warn`, `error`) |
-| `--filter` | Filter by field value in `key=value` format |
+| `--filter` | Filter by field value in `key=value` format (repeatable) |
 | `--out` | Write matching logs to a file in addition to stdout |
 | `--pretty` | Pretty-print JSON output |
+| `--no-color` | Disable colored output when using `--pretty` |
 
 ---
 
@@ -58,6 +59,12 @@ $ echo '{"level":"error","msg":"connection refused","service":"db"}' | logpipe -
   "msg": "connection refused",
   "service": "db"
 }
+```
+
+Multiple `--filter` flags can be combined (all must match):
+
+```bash
+my-app | logpipe --level warn --filter env=production --filter region=us-east-1
 ```
 
 ---
