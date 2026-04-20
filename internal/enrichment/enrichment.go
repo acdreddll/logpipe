@@ -36,3 +36,12 @@ func (e *Enricher) Apply(line string) (string, error) {
 	}
 	return string(out), nil
 }
+
+// Fields returns a copy of the static fields configured on the Enricher.
+func (e *Enricher) Fields() map[string]string {
+	copy := make(map[string]string, len(e.fields))
+	for k, v := range e.fields {
+		copy[k] = v
+	}
+	return copy
+}
