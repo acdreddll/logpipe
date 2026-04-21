@@ -5,9 +5,27 @@
 // This is useful for scrubbing PII such as email addresses, tokens, or
 // credit-card numbers from log streams before they are routed to outputs.
 //
-// Example usage:
+// # Masker
+//
+// Each Masker is immutable after construction and safe for concurrent use.
+// The Apply method accepts a raw JSON-encoded log line as a byte slice and
+// returns a new byte slice with the field value masked. If the target field
+// is absent from the log line, the input is returned unchanged.
+//
+// # Example usage
 //
 //	m, err := masking.New("email", `[^@]+@[^@]+`, "[REDACTED]")
 //	if err != nil { ... }
 //	masked, err := m.Apply(line)
+//
+// Multiple Maskers can be composed to redact several fields in a single pass:
+//
+//	maskers := []*masking.Masker{
+//		emailMasker,
+//		tokenMasker,
+//	}
+//	for _, m := range maskers {
+//		line, err = m.Apply(line)
+//		if err != nil { ... }
+//	}
 package masking
