@@ -55,3 +55,19 @@ func (l *Limiter) Allow() bool {
 func (l *Limiter) Rate() float64 {
 	return l.rate
 }
+
+// Tokens returns the current number of available tokens.
+// This is useful for monitoring and testing purposes.
+func (l *Limiter) Tokens() float64 {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	now := time.Now()
+	elapsed := now.Sub(l.lastTick).Seconds()
+
+	tokens := l.tokens + elapsed*l.rate
+	if tokens > l.max {
+		tokens = l.max
+	}
+	return tokens
+}
