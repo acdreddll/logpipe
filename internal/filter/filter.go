@@ -56,6 +56,35 @@ func (f *Filter) Match(line []byte) (bool, error) {
 	return true, nil
 }
 
+// MatchMap returns true if the pre-parsed log entry map satisfies all rules.
+// This is useful when the caller has already unmarshalled the log line.
+func (f *Filter) MatchMap(entry map[string]interface{}) (bool, error) {
+	for _, rule := range f.Rules {
+		val, exists := entry[rule.Field]
+		switch rule.Operator {
+		case "exists":
+			if !exists {
+				return false, nil
+			}
+		case "eq":
+			if !exists || toString(val) != rule.Value {
+				return false, nil
+			}
+		case "neq":
+			if exists && toString(val) == rule.Value {
+				return false, nil
+			}
+		case "contains":
+			if !exists || !strings.Contains(toString(val), rule.Value) {
+				return false, nil
+			}
+		default:
+			return false, fmt.Errorf("filter: unknown operator %q", rule.Operator)
+		}
+	}
+	return true, nil
+}
+
 func toString(v interface{}) string {
 	switch s := v.(type) {
 	case string:
