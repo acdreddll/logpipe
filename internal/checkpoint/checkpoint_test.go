@@ -66,6 +66,18 @@ func TestReset_ClearsState(t *testing.T) {
 	}
 }
 
+func TestReset_RemovesFile(t *testing.T) {
+	p := tmpPath(t)
+	cp, _ := New(p)
+	cp.Save(State{Offset: 5, Source: "y"})
+	if err := cp.Reset(); err != nil {
+		t.Fatalf("Reset: %v", err)
+	}
+	if _, err := os.Stat(p); !os.IsNotExist(err) {
+		t.Fatal("expected checkpoint file to be removed after Reset")
+	}
+}
+
 func TestReset_NoFile_NoError(t *testing.T) {
 	cp, _ := New(tmpPath(t))
 	if err := cp.Reset(); err != nil {
