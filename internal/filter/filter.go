@@ -9,7 +9,7 @@ import (
 // Rule defines a single filter rule applied to a log entry field.
 type Rule struct {
 	Field    string `json:"field"`
-	Operator string `json:"operator"` // eq, contains, exists
+	Operator string `json:"operator"` // eq, contains, exists, neq
 	Value    string `json:"value"`
 }
 
@@ -27,7 +27,7 @@ func New(rules []Rule) *Filter {
 func (f *Filter) Match(line []byte) (bool, error) {
 	var entry map[string]interface{}
 	if err := json.Unmarshal(line, &entry); err != nil {
-		return false, err
+		return false, fmt.Errorf("filter: failed to parse log line: %w", err)
 	}
 
 	for _, rule := range f.Rules {
@@ -39,6 +39,10 @@ func (f *Filter) Match(line []byte) (bool, error) {
 			}
 		case "eq":
 			if !exists || toString(val) != rule.Value {
+				return false, nil
+			}
+		case "neq":
+			if exists && toString(val) == rule.Value {
 				return false, nil
 			}
 		case "contains":
