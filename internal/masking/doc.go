@@ -28,4 +28,11 @@
 //		line, err = m.Apply(line)
 //		if err != nil { ... }
 //	}
+//
+// # ApplyAll helper
+//
+// As a convenience, ApplyAll applies a slice of Maskers to a log line in
+// order, short-circuiting and returning the first error encountered:
+//
+//	line, err := masking.ApplyAll(line, emailMasker, tokenMasker)
 package masking
