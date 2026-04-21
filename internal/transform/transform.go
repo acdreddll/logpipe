@@ -35,6 +35,12 @@ func New(rules []Rule) (*Transformer, error) {
 		if r.Field == "" {
 			return nil, fmt.Errorf("rule %d: field is required", i)
 		}
+		switch r.Op {
+		case OpSet, OpDelete, OpRename:
+			// valid op
+		default:
+			return nil, fmt.Errorf("rule %d: unknown op %q", i, r.Op)
+		}
 		if r.Op == OpRename && r.To == "" {
 			return nil, fmt.Errorf("rule %d: 'to' is required for rename op", i)
 		}
