@@ -43,6 +43,11 @@ func (p *Parser) Parse(line string) (map[string]any, error) {
 	}
 }
 
+// Format returns the format this parser was configured with.
+func (p *Parser) Format() Format {
+	return p.format
+}
+
 func parseJSON(line string) (map[string]any, error) {
 	var m map[string]any
 	if err := json.Unmarshal([]byte(line), &m); err != nil {
