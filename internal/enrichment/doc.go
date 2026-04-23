@@ -4,5 +4,13 @@
 // every JSON log line it processes. Existing keys in the log line are
 // preserved and will not be overwritten by the enricher.
 //
+// Example usage:
+//
+//	enricher := enrichment.New(map[string]string{
+//		"service": "my-service",
+//		"env":     "production",
+//	})
+//	enriched, err := enricher.Enrich(logLine)
+//
 // Use NewRegistry to manage multiple named enrichers within a pipeline.
 package enrichment
