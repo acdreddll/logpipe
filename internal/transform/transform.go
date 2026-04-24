@@ -73,3 +73,12 @@ func (t *Transformer) Apply(line string) (string, error) {
 	}
 	return string(out), nil
 }
+
+// Rules returns a copy of the rules held by the Transformer.
+func (t *Transformer) Rules() []Rule {
+	copy := make([]Rule, len(t.rules))
+	for i, r := range t.rules {
+		copy[i] = r
+	}
+	return copy
+}
