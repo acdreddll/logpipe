@@ -77,3 +77,27 @@ func TestApply_InvalidJSON(t *testing.T) {
 		t.Fatal("expected error for invalid JSON")
 	}
 }
+
+func TestApply_PreservesExistingFields(t *testing.T) {
+	inj, err := New("prod")
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	out, err := inj.Apply([]byte(`{"level":"error","msg":"boom","caller":"main.go:42"}`))
+	if err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	m := decode(t, out)
+	if m["level"] != "error" {
+		t.Fatalf("expected level=error, got %v", m["level"])
+	}
+	if m["msg"] != "boom" {
+		t.Fatalf("expected msg=boom, got %v", m["msg"])
+	}
+	if m["caller"] != "main.go:42" {
+		t.Fatalf("expected caller=main.go:42, got %v", m["caller"])
+	}
+	if m["tag"] != "prod" {
+		t.Fatalf("expected tag=prod, got %v", m["tag"])
+	}
+}
