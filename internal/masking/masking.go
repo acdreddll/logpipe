@@ -30,7 +30,7 @@ func New(field, pattern, replace string) (*Masker, error) {
 }
 
 // Apply masks the target field in the JSON line and returns the modified line.
-// If the field is absent the line is returned unchanged.
+// If the field is absent or its value is not a string, the line is returned unchanged.
 func (m *Masker) Apply(line []byte) ([]byte, error) {
 	var obj map[string]interface{}
 	if err := json.Unmarshal(line, &obj); err != nil {
@@ -54,4 +54,17 @@ func (m *Masker) Apply(line []byte) ([]byte, error) {
 		return nil, fmt.Errorf("masking: marshal error: %w", err)
 	}
 	return out, nil
+}
+
+// ApplyAll applies a sequence of Maskers to a line in order, returning the
+// cumulative result. Processing stops and an error is returned if any Masker fails.
+func ApplyAll(line []byte, maskers []*Masker) ([]byte, error) {
+	var err error
+	for _, m := range maskers {
+		line, err = m.Apply(line)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return line, nil
 }
