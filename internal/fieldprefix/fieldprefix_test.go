@@ -85,3 +85,22 @@ func TestApply_InvalidJSON(t *testing.T) {
 		t.Fatal("expected error for invalid JSON")
 	}
 }
+
+func TestApply_AlreadyPrefixed(t *testing.T) {
+	// Ensure the prefix is applied regardless of existing value content,
+	// even when the value already starts with the prefix string.
+	p, err := fieldprefix.New("env", "prod_")
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	out, err := p.Apply([]byte(`{"env":"prod_us-east"}`))
+	if err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+
+	m := decode(t, out)
+	if got := m["env"].(string); got != "prod_prod_us-east" {
+		t.Errorf("got %q, want %q", got, "prod_prod_us-east")
+	}
+}
